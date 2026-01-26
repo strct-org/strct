@@ -1,0 +1,38 @@
+name: Build and Release Agent
+
+on:
+  push:
+    tags:
+      - 'v*' # Only run this when you tag a version like v1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build for ARM64 (Orange Pi / RPi)
+        env:
+          GOOS: linux
+          GOARCH: arm64
+          # Inject the domain and IP at build time!
+          LDFLAGS: "-X main.DefaultDomain=strct.org -X main.DefaultVPSIP=157.90.167.157"
+        run: |
+          go build -ldflags "$LDFLAGS" -o strct-agent-arm64 cmd/cloud-agent/main.go
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: strct-agent-arm64
+          draft: false
+          prerelease: false
