@@ -114,8 +114,6 @@ func doUpdate(binURL, checksumURL string) error {
 
 	log.Println("OTA: Update applied successfully! Restarting...")
 
-	// D. Restart the application
-	// We exit successfully. Systemd (or a loop in main) will handle the restart.
 	os.Exit(0)
 	return nil
 }
