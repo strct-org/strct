@@ -1,25 +1,26 @@
 #!/bin/bash
-
 set -e
 
-echo "Installing Strct Agent..."
+VERSION="v1.0.1" 
+BINARY_NAME="strct-agent-arm64"
+REPO="strct-org/strct"
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_NAME}"
 
-# Create Directories
+echo "--- Installing Strct Cloud Agent ---"
+
+echo "Installing dependencies..."
+apt-get update -qq
+apt-get install -y docker.io network-manager curl
+
+echo "Creating directories..."
 mkdir -p /mnt/data
 mkdir -p /etc/strct
 
-# Install dependencies
-apt-get update
-apt-get install -y docker.io network-manager
-
-# Enable Docker
-systemctl enable --now docker
-
-# Copy Binary
-cp cloud-agent /usr/local/bin/
+echo "Downloading Agent ($VERSION)..."
+curl -L -o /usr/local/bin/cloud-agent "$DOWNLOAD_URL"
 chmod +x /usr/local/bin/cloud-agent
 
-# Create Systemd Service
+echo "Configuring Systemd..."
 cat <<EOF > /etc/systemd/system/cloud-agent.service
 [Unit]
 Description=Strct Agent
@@ -29,6 +30,7 @@ Wants=network-online.target docker.service
 [Service]
 Type=simple
 User=root
+WorkingDirectory=/etc/strct
 ExecStart=/usr/local/bin/cloud-agent
 Restart=always
 RestartSec=5s
@@ -41,9 +43,11 @@ Environment="DOMAIN=strct.org"
 WantedBy=multi-user.target
 EOF
 
-# Start
+echo "Starting Agent..."
 systemctl daemon-reload
 systemctl enable cloud-agent
-systemctl start cloud-agent
+systemctl restart cloud-agent
 
-echo "Agent installed and running!"
+echo "SUCCESS! Agent is running."
+echo "Check status with: systemctl status cloud-agent"
+echo "View logs with:  journalctl -u cloud-agent -f"

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"runtime"
@@ -56,7 +57,17 @@ func main() {
 	if !hasInternet() {
 		log.Println("[INIT] No Internet detected. Entering SETUP MODE.")
 
-		err := wifiManager.StartHotspot("StructIO-Setup", "12345678")
+		// 1. Get Unique Hardware ID (MAC Address of wlan0)
+		macSuffix, fullMac := getMacDetails()
+
+		log.Printf("[SETUP] Device Hardware MAC: %s", fullMac)
+
+		ssid := "Strct-Setup-" + macSuffix
+		password := "strct" + macSuffix
+
+		log.Printf("[SETUP] Creating Hotspot. SSID: %s | Pass: %s", ssid, password)
+
+		err := wifiManager.StartHotspot(ssid, password)
 		if err != nil {
 			log.Printf("[SETUP] Failed to create hotspot: %v", err)
 		}
@@ -69,7 +80,7 @@ func main() {
 
 		log.Println("[SETUP] Credentials received. Stopping Hotspot and connecting...")
 		wifiManager.StopHotspot()
-		
+
 		// Give the wifi chip a moment to switch modes
 		time.Sleep(5 * time.Second)
 	} else {
@@ -77,7 +88,7 @@ func main() {
 	}
 
 	otaConfig := ota.Config{
-		CurrentVersion: "1.0.0",
+		CurrentVersion: "1.0.1",
 		StorageURL:     "https://portal.strct.org/updates",
 	}
 	ota.StartUpdater(otaConfig)
@@ -153,7 +164,7 @@ func getEnv(key, fallback string) string {
 }
 
 func getOrGenerateDeviceID() string {
-	fileName := "device-id.lock"
+	fileName := "/etc/strct/device-id.lock"
 
 	content, err := os.ReadFile(fileName)
 	if err == nil {
@@ -176,4 +187,26 @@ func hasInternet() bool {
 	}
 	_, err := client.Get("http://clients3.google.com/generate_204")
 	return err == nil
+}
+
+func getMacDetails() (string, string) {
+	// Try to get wlan0, fallback to first available
+	ifas, err := net.Interfaces()
+	if err != nil {
+		return "XXXX", "00:00:00:00:00:00"
+	}
+
+	for _, ifa := range ifas {
+		if ifa.Name == "wlan0" && len(ifa.HardwareAddr) > 0 {
+			mac := ifa.HardwareAddr.String()
+			// clean it up (remove colons)
+			cleanMac := strings.ReplaceAll(mac, ":", "")
+			cleanMac = strings.ToUpper(cleanMac)
+
+			if len(cleanMac) >= 4 {
+				return cleanMac[len(cleanMac)-4:], mac
+			}
+		}
+	}
+	return "XXXX", "00:00:00:00:00:00"
 }

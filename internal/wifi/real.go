@@ -45,10 +45,10 @@ func (w *RealWiFi) StartHotspot(ssid, password string) error {
 	fmt.Printf("[WIFI] Creating Hotspot: %s\n", ssid)
 
 	// delete existing hotspot conn
-	exec.Command("nmcli", "con", "delete", "Hotsport").Run()
+	exec.Command("nmcli", "con", "delete", "Hotspot").Run()
 
 	//crete hotspot
-	cmd := exec.Command("nmclii", "dev", "wifi", "hotspot", "ifname", w.Interface, "con-name", "Hotspot", "ssid", ssid, "password", password)
+	cmd := exec.Command("nmcli", "dev", "wifi", "hotspot", "ifname", w.Interface, "con-name", "Hotspot", "ssid", ssid, "password", password)
 
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to start hotspot: %s, %v", string(output), err)
