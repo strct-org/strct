@@ -3,7 +3,7 @@ name: Build and Release Agent
 on:
   push:
     tags:
-      - 'v*' # Only run this when you tag a version like v1.0.0
+      - 'v*' 
 
 permissions:
   contents: write
@@ -25,7 +25,6 @@ jobs:
         env:
           GOOS: linux
           GOARCH: arm64
-          # Inject the domain and IP at build time!
           LDFLAGS: "-X main.DefaultDomain=strct.org -X main.DefaultVPSIP=157.90.167.157"
         run: |
           go build -ldflags "$LDFLAGS" -o strct-agent-arm64 cmd/cloud-agent/main.go

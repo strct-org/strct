@@ -34,6 +34,7 @@ func main() {
 	flag.Parse()
 
 	log.Println("--- Strct Agent Starting ---")
+	log.Println("--- Latest Check ---")
 
 	if err := godotenv.Load(); err != nil {
 		log.Println("[CONFIG] No .env file found, relying on system env vars")

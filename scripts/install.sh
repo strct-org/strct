@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION="v1.0.1" 
+VERSION="v1.0.2" 
 BINARY_NAME="strct-agent-arm64"
 REPO="strct-org/strct"
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${BINARY_NAME}"
