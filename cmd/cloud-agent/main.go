@@ -74,7 +74,7 @@ func main() {
 		}
 
 		done := make(chan bool)
-		go setup.StartCaptivePortal(wifiManager, done)
+		go setup.StartCaptivePortal(wifiManager, done, *devMode)
 
 		log.Println("[SETUP] Web Server running. Waiting for user credentials...")
 		<-done // BLOCK HERE until user connects
