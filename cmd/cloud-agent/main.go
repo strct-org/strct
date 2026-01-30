@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/strct-org/strct-agent/internal/disk"
-	"github.com/strct-org/strct-agent/internal/docker"
 	"github.com/strct-org/strct-agent/internal/ota"
 	"github.com/strct-org/strct-agent/internal/setup"
 	"github.com/strct-org/strct-agent/internal/tunnel"
@@ -58,7 +57,6 @@ func main() {
 	if !hasInternet() {
 		log.Println("[INIT] No Internet detected. Entering SETUP MODE.")
 
-		// 1. Get Unique Hardware ID (MAC Address of wlan0)
 		macSuffix, fullMac := getMacDetails()
 
 		log.Printf("[SETUP] Device Hardware MAC: %s", fullMac)
@@ -82,7 +80,7 @@ func main() {
 		log.Println("[SETUP] Credentials received. Stopping Hotspot and connecting...")
 		wifiManager.StopHotspot()
 
-		// Give the wifi chip a moment to switch modes
+		// switch modes
 		time.Sleep(5 * time.Second)
 	} else {
 		log.Println("[INIT] Internet detected. Skipping setup.")
@@ -92,7 +90,7 @@ func main() {
 		CurrentVersion: "1.0.5",
 		StorageURL:     "https://portal.strct.org/updates",
 	}
-	
+
 	ota.StartUpdater(otaConfig)
 
 	diskMgr := disk.New(*devMode)
@@ -111,12 +109,6 @@ func main() {
 
 	if err := diskMgr.EnsureMounted(dataDir); err != nil {
 		log.Printf("[DISK] CRITICAL: Failed to mount disk: %v", err)
-	}
-
-	log.Printf("[DOCKER] Ensuring FileBrowser is running (Data: %s)...", dataDir)
-	err = docker.EnsureFileBrowser(dataDir)
-	if err != nil {
-		log.Printf("[DOCKER] Critical Error starting container: %v", err)
 	}
 
 	tunnelConfig := tunnel.TunnelConfig{
