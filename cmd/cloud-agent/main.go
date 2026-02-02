@@ -103,21 +103,19 @@ func main() {
 		log.Printf("[DISK] Status: %s", status)
 	}
 
-	  dataDir := "./data"
-    if !*devMode && runtime.GOARCH == "arm64" {
-        dataDir = "/mnt/data"
-    }
+	dataDir := "./data"
+	if !*devMode && runtime.GOARCH == "arm64" {
+		dataDir = "/mnt/data"
+	}
 
-    if *devMode {
-        os.MkdirAll(dataDir, 0755)
-    }
+	os.MkdirAll(dataDir, 0755)
 
 	if err := diskMgr.EnsureMounted(dataDir); err != nil {
 		log.Printf("[DISK] CRITICAL: Failed to mount disk: %v", err)
 	}
 
 	log.Printf("[SYSTEM] Starting Native File Server (Data: %s)...", dataDir)
-	
+
 	go fileserver.Start(dataDir, 8080, *devMode)
 
 	tunnelConfig := tunnel.TunnelConfig{
@@ -155,10 +153,9 @@ func loadConfig(devMode bool) Config {
 		VPSPort:   port,
 		AuthToken: getEnv("AUTH_TOKEN", "default-secret"),
 		Domain:    getEnv("DOMAIN", "localhost"),
-		DeviceID:  getOrGenerateDeviceID(devMode), 
+		DeviceID:  getOrGenerateDeviceID(devMode),
 	}
 }
-
 
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
@@ -166,7 +163,6 @@ func getEnv(key, fallback string) string {
 	}
 	return fallback
 }
-
 
 func getOrGenerateDeviceID(devMode bool) string {
 	var filePath string
