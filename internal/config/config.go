@@ -11,15 +11,13 @@ import (
 )
 
 type Config struct {
-	IsDev    bool
-	DeviceID string
-	Domain   string
-
+	DeviceID  string
+	Domain    string
 	VPSIP     string
-	VPSPort   int
 	AuthToken string
-
-	DataDir string
+	DataDir   string
+	VPSPort   int
+	IsDev     bool
 }
 
 func Load() *Config {
