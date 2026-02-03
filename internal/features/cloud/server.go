@@ -1,4 +1,4 @@
-package fileserver
+package cloud
 
 import (
 	"encoding/json"
@@ -12,12 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	// Make sure these paths match your actual project structure
 	"github.com/strct-org/strct-agent/internal/platform/disk"
 	"github.com/strct-org/strct-agent/utils"
 )
 
-// FileServer holds both configuration and runtime state
 type FileServer struct {
 	DataDir   string
 	Port      int
@@ -25,7 +23,6 @@ type FileServer struct {
 	StartTime time.Time
 }
 
-// --- JSON Response Structs ---
 
 type StatusResponse struct {
 	Uptime   int64  `json:"uptime"`
@@ -46,38 +43,30 @@ type FileItem struct {
 	ModifiedAt string `json:"modifiedAt"`
 }
 
-// --- Constructor ---
 
 func New(dataDir string, port int, isDev bool) *FileServer {
 	return &FileServer{
 		DataDir: dataDir,
 		Port:    port,
 		IsDev:   isDev,
-		// StartTime will be set when Start() is called
 	}
 }
 
-// --- Service Interface Implementation ---
 
 func (s *FileServer) Start() error {
-	// 1. Resolve Absolute Path
 	absPath, err := filepath.Abs(s.DataDir)
 	if err != nil {
 		absPath = filepath.Clean(s.DataDir)
 	}
-	// Update struct to use the absolute path for all handlers
 	s.DataDir = absPath
 
-	// 2. Ensure Directory Exists
 	if err := os.MkdirAll(s.DataDir, 0755); err != nil {
 		log.Printf("[FILESERVER] Error creating root path: %v", err)
 		return err
 	}
 
-	// 3. Set Start Time
 	s.StartTime = time.Now()
 
-	// 4. Determine Port (Dev Mode Override)
 	finalPort := s.Port
 	if s.IsDev {
 		if s.Port <= 1024 {
@@ -86,7 +75,6 @@ func (s *FileServer) Start() error {
 		}
 	}
 
-	// 5. Setup Router
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -94,33 +82,27 @@ func (s *FileServer) Start() error {
 		w.Write([]byte("<h1>Strct Agent is Online</h1><p>API endpoints: /api/status, /api/files</p>"))
 	})
 
-	// API Routes
 	mux.HandleFunc("/api/status", s.handleStatus)
 	mux.HandleFunc("/api/files", s.handleFiles)
 	mux.HandleFunc("/api/mkdir", s.handleMkdir)
 	mux.HandleFunc("/api/delete", s.handleDelete)
 	mux.HandleFunc("/strct_agent/fs/upload", s.handleUpload)
 
-	// Static File Serving
 	fileHandler := http.StripPrefix("/files/", http.FileServer(http.Dir(s.DataDir)))
 	mux.Handle("/files/", fileHandler)
 
 	log.Printf("[FILESERVER] Starting Native Server on port %d serving %s (Dev: %v)", finalPort, s.DataDir, s.IsDev)
 
-	// 6. Wrap with Middleware
 	handlerWithCors := corsMiddleware(mux)
 
-	// 7. Start Listening (Returns error if it fails, which logs in app.go)
 	return http.ListenAndServe(fmt.Sprintf(":%d", finalPort), handlerWithCors)
 }
 
-// --- Handlers ---
 
 func (s *FileServer) handleStatus(w http.ResponseWriter, r *http.Request) {
 	var stat syscall.Statfs_t
 	var realFree uint64
 
-	// Note: syscall.Statfs is Linux/Unix only. On Windows this will fail.
 	if err := syscall.Statfs(s.DataDir, &stat); err == nil {
 		realFree = stat.Bavail * uint64(stat.Bsize)
 	}
@@ -242,7 +224,6 @@ func (s *FileServer) handleDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Prevent deleting the root data folder
 	if fullPath == s.DataDir {
 		http.Error(w, "Cannot delete root directory", http.StatusForbidden)
 		return
@@ -271,7 +252,6 @@ func (s *FileServer) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit upload size in RAM (32MB), rest goes to temp disk
 	r.ParseMultipartForm(32 << 20)
 
 	file, header, err := r.FormFile("file")
@@ -293,7 +273,6 @@ func (s *FileServer) handleUpload(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Uploaded"))
 }
 
-// --- Helpers ---
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
