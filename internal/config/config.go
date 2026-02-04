@@ -46,6 +46,8 @@ func Load() *Config {
 
 	return cfg
 }
+
+
 func (c *Config) IsArm64() bool {
 	return runtime.GOOS == "linux" && runtime.GOARCH == "arm64" && !c.IsDev
 

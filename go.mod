@@ -10,12 +10,11 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/miekg/dns v1.1.72
 	github.com/minio/selfupdate v0.6.0
+	github.com/prometheus-community/pro-bing v0.7.0
 )
 
 require (
 	aead.dev/minisign v0.2.0 // indirect
-	github.com/go-ping/ping v1.2.0 // indirect
-	github.com/prometheus-community/pro-bing v0.7.0 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/net v0.49.0 // indirect

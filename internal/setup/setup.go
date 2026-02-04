@@ -13,10 +13,10 @@ type Credentials struct {
 	SSID     string `json:"ssid"`
 	Password string `json:"password"`
 }
+
 func StartCaptivePortal(wifiMgr wifi.Provider, done chan<- bool, devMode bool) {
 	mux := http.NewServeMux()
 
-	// 1. API Handlers
 	mux.HandleFunc("/scan", func(w http.ResponseWriter, r *http.Request) {
 		networks, err := wifiMgr.Scan()
 		if err != nil {
@@ -43,19 +43,7 @@ func StartCaptivePortal(wifiMgr wifi.Provider, done chan<- bool, devMode bool) {
 		done <- true
 	})
 
-	// 2. The "Catch-All" Handler (The magic part)
-	// This handles "/", "/generate_204", "/hotspot-detect.html", etc.
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// If it's a specific Android check, sometimes returning 204 prevents the popup.
-		// We WANT the popup, so we redirect or serve HTML.
-		
-		// If the user requests a specific domain (e.g. google.com), redirect them to our IP
-		// Note: Replace 10.42.0.1 with your actual Hotspot Gateway IP if different
-		// redirectIP := "http://10.42.0.1" 
-		
-		// However, the simplest way is to just serve the HTML for EVERYTHING.
-		// The OS sees "I asked for Google, got this HTML page" -> Triggers Portal.
-		
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		w.Header().Set("Pragma", "no-cache")
 		w.Header().Set("Expires", "0")
@@ -70,9 +58,6 @@ func StartCaptivePortal(wifiMgr wifi.Provider, done chan<- bool, devMode bool) {
 
 	log.Printf("[SETUP] Web Server listening on %s", port)
 	
-	// Start DNS Server (Only in Prod/Linux usually, but good to run if we can bind 53)
-	// You need to know your Hotspot Gateway IP. 
-	// NetworkManager hotspots usually use 10.42.0.1 by default.
 	if !devMode {
 		dnsServer := StartDNSServer("10.42.0.1") 
 		defer dnsServer.Shutdown() 
@@ -83,7 +68,6 @@ func StartCaptivePortal(wifiMgr wifi.Provider, done chan<- bool, devMode bool) {
 	}
 }
 
-// Simple embedded HTML for the phone
 const htmlPage = `
 <!DOCTYPE html>
 <html>
