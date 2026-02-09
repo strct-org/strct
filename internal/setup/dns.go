@@ -15,6 +15,7 @@ func StartDNSServer(redirectIP string) *dns.Server {
 
 		for _, q := range r.Question {
 			if q.Qtype == dns.TypeA {
+				// Redirect ALL A-record requests to our IP
 				rr, _ := dns.NewRR(fmt.Sprintf("%s 3600 IN A %s", q.Name, redirectIP))
 				m.Answer = append(m.Answer, rr)
 			}
@@ -22,10 +23,10 @@ func StartDNSServer(redirectIP string) *dns.Server {
 		w.WriteMsg(m)
 	})
 
-	server := &dns.Server{Addr: ":53", Net: "udp"}
+	server := &dns.Server{Addr: ":5353", Net: "udp"}
 	
 	go func() {
-		log.Printf("[DNS] Starting DNS Spoofing Server on :53 -> %s", redirectIP)
+		log.Printf("[DNS] Starting DNS Spoofing Server on :5353 -> %s", redirectIP)
 		if err := server.ListenAndServe(); err != nil {
 			log.Printf("[DNS] Failed to start server: %v", err)
 		}
