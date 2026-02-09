@@ -13,7 +13,7 @@ type Config struct {
 }
 
 func Start(cfg Config, routes map[string]http.HandlerFunc) error {
-	
+
 	finalPort := cfg.Port
 	if cfg.IsDev {
 		if cfg.Port <= 1024 {
@@ -47,8 +47,8 @@ func corsMiddleware(next http.Handler) http.Handler {
 		allowedOrigins := map[string]bool{
 			"https://strct.org":     true,
 			"https://dev.strct.org": true,
-			"http://localhost:3001":        true,
-			"http://localhost:3000":        true,
+			"http://localhost:3001": true,
+			"http://localhost:3000": true,
 		}
 
 		if allowedOrigins[origin] {

@@ -102,7 +102,7 @@ func (a *Agent) Bootstrap() {
 
 	a.Services = []Service{
 		tunnel.New(a.Config),    // Frp Tunnel
-		dns.NewAdBlocker(":53"), // AdGuard Home / DNS
+		dns.NewAdBlocker(":63"), // AdGuard Home / DNS
 		apiSvc,                  // Unified HTTP Server (Cloud + Monitor)
 	}
 }
