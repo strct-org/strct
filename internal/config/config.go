@@ -18,8 +18,10 @@ type Config struct {
 	DataDir    string
 	BackendURL string
 	VPSPort    int
+	PprofPort  int
 	IsDev      bool
 }
+
 
 func Load() *Config {
 	devMode := flag.Bool("dev", false, "Run in development mode (Mock hardware)")
@@ -35,6 +37,7 @@ func Load() *Config {
 		VPSPort:   getEnvAsInt("VPS_PORT", 7000),
 		AuthToken: getEnv("AUTH_TOKEN", "default-secret"),
 		Domain:    getEnv("DOMAIN", "localhost"),
+		PprofPort: getEnvAsInt("PPROF_PORT", 6060),
 	}
 
 	if cfg.IsArm64() {
@@ -47,6 +50,7 @@ func Load() *Config {
 
 	return cfg
 }
+
 
 func (c *Config) IsArm64() bool {
 	return runtime.GOOS == "linux" && runtime.GOARCH == "arm64" && !c.IsDev

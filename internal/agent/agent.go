@@ -1,10 +1,13 @@
 package agent
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
 	"time"
+
+	_ "net/http/pprof"
 
 	"github.com/strct-org/strct-agent/internal/api"
 	"github.com/strct-org/strct-agent/internal/config"
@@ -25,10 +28,11 @@ const (
 )
 
 type Agent struct {
-	Wifi      wifi.Provider
-	Runners   []Runner
-	Config    *config.Config
+	Wifi    wifi.Provider
+	Runners []Runner
+	Config  *config.Config
 }
+
 type HTTPFeature interface {
 	GetRoutes() map[string]http.HandlerFunc
 }
@@ -40,6 +44,10 @@ type Runner interface {
 type APIService struct {
 	Config api.Config
 	Routes map[string]http.HandlerFunc
+}
+
+type ProfilerService struct {
+	Port int
 }
 
 func (s *APIService) Start() error {
@@ -77,12 +85,15 @@ func (a *Agent) Initialize() error {
 	apiSvc := a.assembleAPIServer(cloud, monitor)
 	tunnelSvc := tunnel.New(a.Config)
 	dnsSvc := dns.NewAdBlocker(":63")
-
+	profilerSvc := &ProfilerService{
+		Port: a.Config.PprofPort,
+	}
 	a.Runners = []Runner{
 		monitor,
 		tunnelSvc,
 		dnsSvc,
 		apiSvc,
+		profilerSvc,
 	}
 
 	return nil
@@ -114,7 +125,7 @@ func (a *Agent) assembleAPIServer(cloud *cloud.Cloud, monitorFeat *monitor.Netwo
 
 	routes["/api/network/stats"] = monitorFeat.HandleStats
 	routes["/api/network/speedtest"] = monitorFeat.HandleSpeedtest
-	routes["/api/health"] = monitorFeat.HandleHealth 
+	routes["/api/health"] = monitorFeat.HandleHealth
 
 	return &APIService{
 		Config: api.Config{
@@ -172,4 +183,11 @@ func (a *Agent) runSetupWizard() {
 
 	a.Wifi.StopHotspot()
 	time.Sleep(2 * time.Second)
+}
+
+func (p *ProfilerService) Start() error {
+	addr := fmt.Sprintf("0.0.0.0:%d", p.Port)
+	log.Printf("[PPROF] Profiling server started on http://%s/debug/pprof", addr)
+
+	return http.ListenAndServe(addr, nil)
 }

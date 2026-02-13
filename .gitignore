@@ -12,3 +12,7 @@ filebrowser.db-shm
 
 .env
 device-id.lock
+
+*.tar.gz
+*.img
+agent
